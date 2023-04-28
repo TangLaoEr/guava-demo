@@ -7,17 +7,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author <a href="https://github.com/TangLaoEr">tks</a>
  * @date 2023/4/25
  */
 class MyRegistry {
-    private final ConcurrentHashMap<String, ConcurrentLinkedDeque<MySubscriber>> subscriberContainer = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ConcurrentLinkedQueue<MySubscriber>> subscriberContainer = new ConcurrentHashMap<>();
 
     public void bind(Object subscriber) {
         List<Method> subscribeMethods = getSubscribeMethods(subscriber);
         subscribeMethods.forEach(m -> tierSubscriber(subscriber, m));
+    }
+
+
+    public ConcurrentLinkedQueue<MySubscriber> scanSubscriber(final String topic) {
+        return subscriberContainer.get(topic);
     }
 
     public void unbind(Object subscriber) {
@@ -31,7 +37,7 @@ class MyRegistry {
     private void tierSubscriber(Object subscriber, Method method) {
         MySubscribe mySubscribe = method.getAnnotation(MySubscribe.class);
         String topic = mySubscribe.topic();
-        subscriberContainer.computeIfAbsent(topic, key -> new ConcurrentLinkedDeque<>());
+        subscriberContainer.computeIfAbsent(topic, key -> new ConcurrentLinkedQueue<>());
         subscriberContainer.get(topic).add(new MySubscriber(subscriber, method));
     }
 
